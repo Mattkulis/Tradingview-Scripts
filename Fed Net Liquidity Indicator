@@ -1,0 +1,34 @@
+#Pine Script™ indicator
+Fed Net Liquidity Indicator
+
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © jlb05013
+
+//@version=5
+indicator("Fed Net Liquidity Indicator", overlay=true, scale=scale.right)
+
+i_res = input.timeframe('D', "Resolution", options=['D', 'W', 'M'])
+
+unit_input = input.string('Millions', options=['Millions', 'Billions', 'Trillions'])
+
+units = unit_input == 'Billions' ? 1e9 : unit_input == 'Millions' ? 1e6 : unit_input == 'Trillions' ? 1e12 : na
+
+fed_bal = request.security('FRED:WALCL', i_res, close) // millions
+tga = request.security('FRED:WTREGEN', i_res, close) // billions
+rev_repo = request.security('FRED:RRPONTSYD', i_res, close) // billions
+
+net_liquidity = (fed_bal - (tga + rev_repo)) / units
+
+var net_liquidity_offset = 10 // 2-week offset for use with daily charts
+
+if timeframe.isdaily
+    net_liquidity_offset := 10
+
+if timeframe.isweekly
+    net_liquidity_offset := 2
+    
+if timeframe.ismonthly
+    net_liquidity_offset := 0
+    
+plot(net_liquidity, title='Net Liquidity', color=color.red, style=plot.style_line, offset=net_liquidity_offset, linewidth = 2)
+
